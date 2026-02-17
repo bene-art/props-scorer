@@ -1,0 +1,4 @@
+# Compatibility stub - use requirements-prod.txt or requirements-dev.txt
+# This file exists for tools that expect requirements.txt
+
+-r requirements-prod.txt

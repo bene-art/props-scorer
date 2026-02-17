@@ -1,0 +1,11 @@
+# Development and testing dependencies
+# Install with: pip install -r requirements-dev.txt
+
+-r requirements-prod.txt
+
+# Testing
+pytest>=8.0.0
+httpx>=0.26.0
+
+# Linting
+ruff>=0.2.0

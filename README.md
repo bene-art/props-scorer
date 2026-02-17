@@ -1,0 +1,173 @@
+# Props Scorer
+
+[![CI](https://github.com/bene-art/props-scorer/actions/workflows/ci.yml/badge.svg)](https://github.com/bene-art/props-scorer/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Why does this exist?
+
+I needed to make money for med school. Sports betting seemed like a good way to apply math to something with real stakes—literally. So instead of using AI to help me study flashcards, I started building models to find edges in player props.
+
+That's how BenAi started. A side project to fund school turned into a full system: agents, workflows, databases, the whole thing. This repo is just the inference layer—the part that takes player stats and spits out a prediction.
+
+I pulled it out and cleaned it up because the full system is messy and personal. This is the version I can show people.
+
+---
+
+## What does it actually do?
+
+You send it player info. It tells you the probability they'll go over or under a betting line.
+
+That's it. Three endpoints:
+
+| Endpoint | What it does |
+|----------|--------------|
+| `/health` | "You alive?" → "Yeah, here's my version" |
+| `/model` | "What stats do you need?" → List of features |
+| `/predict` | "Here's the player data" → Probability + recommendation |
+
+---
+
+## Quick example
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sport": "NBA",
+    "stat_type": "points",
+    "line": 25.5,
+    "glicko_mu": 1650.0,
+    "last_5_avg": 27.2,
+    "last_10_avg": 26.8,
+    "is_home": true
+  }'
+```
+
+```json
+{
+  "probability": 0.62,
+  "confidence": "medium",
+  "recommendation": "OVER",
+  "model_version": "xgboost-props-v2"
+}
+```
+
+Translation: 62% chance he goes over 25.5 points. Medium confidence. Model says take the over.
+
+---
+
+## Why sports betting?
+
+Honestly? The math.
+
+Baseball especially—so many stats, so many ways to slice it. Once you get past a certain level, math stops being something you have to do and becomes something you *get* to do. It's a tool, not a crutch.
+
+Sports betting is also a brutally honest feedback loop. You're either right or you're not. The market doesn't care about your feelings. I like that.
+
+---
+
+## Why AI?
+
+I think people are afraid of what they don't understand. And that fear creates distance from technology that's actively changing everything.
+
+I went the other direction. Started using it, started building with it, and now I genuinely can't imagine working without it. The potential is insane—especially in physics, which is what I nerd out about when I'm not coding. (Interstellar is my favorite movie. Make of that what you will.)
+
+AI in the right hands is a multiplier. It lets you research faster, build faster, iterate faster. The effort is still yours. The results are still yours. But the ceiling is way higher.
+
+---
+
+## What's actually in here?
+
+For my friend who bets but doesn't code:
+
+```
+props-scorer/
+├── src/inference_api/
+│   ├── main.py            # The front door. Handles requests.
+│   ├── scorer.py          # The brain. Does the math.
+│   ├── schemas.py         # The bouncer. Rejects bad input.
+│   └── logging_config.py  # The security camera. Logs everything.
+├── tests/                 # 26 checks to prove it works
+├── Dockerfile             # How to ship it anywhere
+└── .github/workflows/     # Robot that tests everything automatically
+```
+
+For the engineer:
+
+- **FastAPI** with async handlers
+- **Pydantic** schemas for request validation
+- **Structured JSON logging** with request correlation IDs
+- **Docker** containerization with health checks
+- **GitHub Actions** CI across Python 3.10-3.12
+
+---
+
+## The boring-but-important stuff
+
+Every request gets a unique ID. That ID shows up in the logs and in the response headers. If something breaks, you can trace it.
+
+Every prediction includes the model version. If you're comparing results across time, you know exactly which version made each call.
+
+Logs are JSON, not messy text. Any log aggregation tool (Datadog, ELK, whatever) can parse them directly.
+
+These aren't fancy features. They're just what you need when something goes wrong at 2am and you're trying to figure out why.
+
+---
+
+## Running it yourself
+
+```bash
+git clone https://github.com/bene-art/props-scorer.git
+cd props-scorer
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+pytest              # 26 tests, should all pass
+uvicorn inference_api.main:app --reload
+```
+
+Server runs at `localhost:8000`. Hit `/health` to make sure it's alive.
+
+---
+
+## Docker
+
+```bash
+docker build -t props-scorer .
+docker run -p 8000:8000 props-scorer
+```
+
+Same thing, but containerized. Runs the same on your laptop, a server, or Kubernetes.
+
+---
+
+## What this doesn't include
+
+The real model weights. The database of player ratings. The calibration curves. The actual edge.
+
+This is the *infrastructure*—how you serve a model properly. The secret sauce stays private.
+
+---
+
+## Where this fits
+
+I started with sports betting, but BenAi has grown way past that. Websites, workflows, agents, networking, CI/CD pipelines. This repo is a slice of the system, cleaned up and made public.
+
+It's not the whole picture. But it shows how I think about shipping things: tested, logged, versioned, containerized. The fundamentals.
+
+---
+
+## License
+
+MIT. Do whatever you want with it.
+
+---
+
+## Author
+
+Benjamin Easington — [GitHub](https://github.com/bene-art)
+
+I work in logistics, go to school, and build stuff on the side. If you're reading this, you probably care about AI or sports betting or both. Either way, feel free to reach out.
