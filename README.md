@@ -49,11 +49,11 @@ curl -X POST http://localhost:8000/predict \
   "probability": 0.62,
   "confidence": "medium",
   "recommendation": "OVER",
-  "model_version": "heuristic-v2"
+  "model_version": "xgb-v3"
 }
 ```
 
-Translation: 62% chance he goes over 25.5 points. Medium confidence. Scorer says take the over.
+Translation: 62% chance he goes over 25.5 points. Medium confidence. Model says take the over.
 
 ---
 
@@ -85,9 +85,15 @@ For my friend who bets but doesn't code:
 props-scorer/
 ├── src/inference_api/
 │   ├── main.py            # The front door. Handles requests.
-│   ├── scorer.py          # The brain. Does the math.
+│   ├── scorer.py          # The brain. Loads model, runs inference.
 │   ├── schemas.py         # The bouncer. Rejects bad input.
 │   └── logging_config.py  # The security camera. Logs everything.
+├── models/
+│   ├── xgb_scorer_v3.joblib  # Trained XGBoost model (synthetic data)
+│   └── xgb_scorer_v3.json    # Model metadata and metrics
+├── scripts/
+│   ├── train_model.py     # Reproducible training on synthetic data
+│   └── healthcheck.py     # Docker/CI health check
 ├── tests/                 # 32 checks to prove it works
 ├── Dockerfile             # How to ship it anywhere
 └── .github/workflows/     # Robot that tests everything automatically
@@ -95,6 +101,7 @@ props-scorer/
 
 For the engineer:
 
+- **XGBoost** classifier trained on synthetic data (reproducible via `scripts/train_model.py`)
 - **FastAPI** with async handlers
 - **Pydantic** schemas for request validation
 - **Structured JSON logging** with request correlation IDs
@@ -146,9 +153,9 @@ Same thing, but containerized. Runs the same on your laptop, a server, or Kubern
 
 ## What this doesn't include
 
-The real model weights. The database of player ratings. The calibration curves. The actual edge.
+The included model is trained on **synthetic data** to demonstrate the full serving pipeline. Real model weights, player rating databases, and calibration curves stay private.
 
-This is the *infrastructure*—how you serve a model properly. The secret sauce stays private.
+This shows how I build and serve a model: reproducible training, serialization, feature engineering, and structured inference. The actual edge stays private.
 
 ---
 

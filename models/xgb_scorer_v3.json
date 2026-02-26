@@ -1,0 +1,29 @@
+{
+  "model_version": "xgb-v3",
+  "training_samples": 4000,
+  "test_samples": 1000,
+  "features": [
+    "sport_enc",
+    "stat_type_enc",
+    "line",
+    "glicko_mu",
+    "glicko_phi",
+    "last_5_avg",
+    "last_10_avg",
+    "is_home",
+    "team_elo",
+    "opponent_elo",
+    "line_vs_avg",
+    "elo_diff"
+  ],
+  "accuracy": 0.559,
+  "auc_roc": 0.5888,
+  "log_loss": 0.6909,
+  "seed": 42,
+  "data_source": "synthetic",
+  "xgb_params": {
+    "n_estimators": 100,
+    "max_depth": 4,
+    "learning_rate": 0.1
+  }
+}

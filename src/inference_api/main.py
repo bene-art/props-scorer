@@ -105,7 +105,7 @@ async def model_info():
     """
     return ModelResponse(
         model_version=__model_version__,
-        model_type="Rule-Based Scorer",
+        model_type="XGBoost Classifier",
         api_version=__version__,
         supported_sports=["NBA", "NFL", "NHL", "MLB"],
         inputs=[

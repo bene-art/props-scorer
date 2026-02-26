@@ -50,9 +50,12 @@ logs/
 .env.local
 .env.*.local
 
-# Model files (too large for git)
+# Model files (large/proprietary — never commit real weights)
 *.pkl
-*.joblib
 *.h5
 *.onnx
-models/
+*.joblib
+
+# Allow the synthetic trained model (committed to repo)
+!models/xgb_scorer_v3.joblib
+!models/xgb_scorer_v3.json
