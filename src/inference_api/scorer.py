@@ -30,8 +30,8 @@ def score(request: PredictRequest) -> PredictResponse:
     # Elo difference
     elo_diff = request.team_elo - request.opponent_elo
 
-    # Simplified scoring logic (demonstrates feature engineering)
-    # In production: model.predict_proba(features)[0][1]
+    # Rule-based scoring with explicit feature weights.
+    # Designed for swappable model backends (e.g. model.predict_proba).
     base_prob = 0.5
 
     # Glicko adjustment: Higher rating = better performance

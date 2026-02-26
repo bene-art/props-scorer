@@ -119,7 +119,7 @@ class PredictResponse(BaseModel):
                 "probability": 0.62,
                 "confidence": "medium",
                 "recommendation": "OVER",
-                "model_version": "xgboost-props-v2",
+                "model_version": "heuristic-v2",
             }
         }
     )

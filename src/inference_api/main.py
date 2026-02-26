@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Props Scorer",
-    description="ML inference service with structured observability",
+    description="Inference service with structured observability",
     version=__version__,
     lifespan=lifespan,
 )
@@ -105,7 +105,7 @@ async def model_info():
     """
     return ModelResponse(
         model_version=__model_version__,
-        model_type="XGBoost Classifier",
+        model_type="Rule-Based Scorer",
         api_version=__version__,
         supported_sports=["NBA", "NFL", "NHL", "MLB"],
         inputs=[

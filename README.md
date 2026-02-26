@@ -49,11 +49,11 @@ curl -X POST http://localhost:8000/predict \
   "probability": 0.62,
   "confidence": "medium",
   "recommendation": "OVER",
-  "model_version": "xgboost-props-v2"
+  "model_version": "heuristic-v2"
 }
 ```
 
-Translation: 62% chance he goes over 25.5 points. Medium confidence. Model says take the over.
+Translation: 62% chance he goes over 25.5 points. Medium confidence. Scorer says take the over.
 
 ---
 
@@ -88,7 +88,7 @@ props-scorer/
 │   ├── scorer.py          # The brain. Does the math.
 │   ├── schemas.py         # The bouncer. Rejects bad input.
 │   └── logging_config.py  # The security camera. Logs everything.
-├── tests/                 # 26 checks to prove it works
+├── tests/                 # 32 checks to prove it works
 ├── Dockerfile             # How to ship it anywhere
 └── .github/workflows/     # Robot that tests everything automatically
 ```
@@ -125,7 +125,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest              # 26 tests, should all pass
+pytest              # 32 tests, should all pass
 uvicorn inference_api.main:app --reload
 ```
 
