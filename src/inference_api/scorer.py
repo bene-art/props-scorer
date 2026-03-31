@@ -16,11 +16,24 @@ logger = logging.getLogger(__name__)
 # Sport and stat_type encoding (must match training script)
 _SPORT_ENC = {"NBA": 0, "NFL": 1, "NHL": 2, "MLB": 3}
 _STAT_ENC = {
-    "points": 0, "rebounds": 1, "assists": 2, "threes": 3,
-    "pts_rebs": 4, "pts_asts": 5, "pts_rebs_asts": 6,
-    "passing_yards": 7, "rushing_yards": 8, "receiving_yards": 9,
-    "touchdowns": 10, "hits": 11, "home_runs": 12, "rbis": 13,
-    "strikeouts": 14, "total_bases": 15, "goals": 16, "shots": 17,
+    "points": 0,
+    "rebounds": 1,
+    "assists": 2,
+    "threes": 3,
+    "pts_rebs": 4,
+    "pts_asts": 5,
+    "pts_rebs_asts": 6,
+    "passing_yards": 7,
+    "rushing_yards": 8,
+    "receiving_yards": 9,
+    "touchdowns": 10,
+    "hits": 11,
+    "home_runs": 12,
+    "rbis": 13,
+    "strikeouts": 14,
+    "total_bases": 15,
+    "goals": 16,
+    "shots": 17,
     "saves": 18,
 }
 
@@ -30,6 +43,7 @@ MODEL_PATH = Path(__file__).parent.parent.parent / "models" / "xgb_scorer_v3.job
 _model = None
 try:
     import joblib
+
     if MODEL_PATH.exists():
         _model = joblib.load(MODEL_PATH)
         logger.info("model_loaded", extra={"path": str(MODEL_PATH)})
@@ -39,7 +53,11 @@ except Exception as e:
 
 def _build_features(request: PredictRequest) -> list[float]:
     """Build feature vector from request (matches training feature order)."""
-    avg = (request.last_5_avg + request.last_10_avg) / 2 if request.last_10_avg else request.last_5_avg
+    avg = (
+        (request.last_5_avg + request.last_10_avg) / 2
+        if request.last_10_avg
+        else request.last_5_avg
+    )
     line_vs_avg = request.line - avg if avg else 0.0
     elo_diff = request.team_elo - request.opponent_elo
 
@@ -68,7 +86,11 @@ def _score_model(request: PredictRequest) -> float:
 
 def _score_heuristic(request: PredictRequest) -> float:
     """Fallback rule-based scoring when model is unavailable."""
-    avg = (request.last_5_avg + request.last_10_avg) / 2 if request.last_10_avg else request.last_5_avg
+    avg = (
+        (request.last_5_avg + request.last_10_avg) / 2
+        if request.last_10_avg
+        else request.last_5_avg
+    )
     elo_diff = request.team_elo - request.opponent_elo
 
     base_prob = 0.5

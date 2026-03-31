@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class SportEnum(str, Enum):
     """Supported sports."""
+
     NBA = "NBA"
     NFL = "NFL"
     NHL = "NHL"
@@ -17,6 +18,7 @@ class SportEnum(str, Enum):
 
 class StatTypeEnum(str, Enum):
     """Supported stat types."""
+
     # Basketball
     points = "points"
     rebounds = "rebounds"
@@ -44,6 +46,7 @@ class StatTypeEnum(str, Enum):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="API version")
     model_version: str = Field(..., description="Deployed model version")
@@ -52,26 +55,21 @@ class HealthResponse(BaseModel):
 
 class ModelResponse(BaseModel):
     """Model metadata response."""
+
     model_version: str = Field(..., description="Model version identifier")
     model_type: str = Field(..., description="Model architecture type")
     api_version: str = Field(..., description="API version")
     supported_sports: list[str] = Field(..., description="Supported sports")
-    inputs: list[str] = Field(
-        ...,
-        description="Required/optional fields in predict request"
-    )
+    inputs: list[str] = Field(..., description="Required/optional fields in predict request")
     engineered_features: list[str] = Field(
-        ...,
-        description="Features computed internally from inputs"
+        ..., description="Features computed internally from inputs"
     )
-    notes: str = Field(
-        default="",
-        description="Additional information about the model"
-    )
+    notes: str = Field(default="", description="Additional information about the model")
 
 
 class PredictRequest(BaseModel):
     """Prediction request payload."""
+
     sport: SportEnum = Field(..., description="Sport code (NBA, NFL, NHL, MLB)")
     stat_type: StatTypeEnum = Field(..., description="Statistic type")
     line: float = Field(..., description="Betting line value")
@@ -108,6 +106,7 @@ class PredictRequest(BaseModel):
 
 class PredictResponse(BaseModel):
     """Prediction response."""
+
     probability: float = Field(..., description="P(over) probability")
     confidence: str = Field(..., description="Confidence level (low/medium/high)")
     recommendation: str = Field(..., description="Betting recommendation")

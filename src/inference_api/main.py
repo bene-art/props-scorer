@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
         extra={
             "version": __version__,
             "model_version": __model_version__,
-        }
+        },
     )
     yield
     logger.info("service_shutdown")
@@ -74,7 +74,7 @@ async def request_middleware(request: Request, call_next):
             "path": request.url.path,
             "status_code": response.status_code,
             "latency_ms": round(latency_ms, 2),
-        }
+        },
     )
 
     return response
@@ -143,7 +143,7 @@ async def predict(request: Request, payload: PredictRequest):
             "request_id": request_id,
             "sport": payload.sport,
             "stat_type": payload.stat_type,
-        }
+        },
     )
 
     # Run inference
@@ -155,7 +155,7 @@ async def predict(request: Request, payload: PredictRequest):
             "request_id": request_id,
             "probability": result.probability,
             "confidence": result.confidence,
-        }
+        },
     )
 
     return result
@@ -172,7 +172,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "request_id": request_id,
             "error_type": type(exc).__name__,
             "error_message": str(exc),
-        }
+        },
     )
 
     return JSONResponse(
@@ -180,5 +180,5 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={
             "error": "Internal server error",
             "request_id": request_id,
-        }
+        },
     )
