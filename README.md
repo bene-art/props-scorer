@@ -8,7 +8,7 @@
 
 I needed to make money for med school. Sports betting seemed like a good way to apply math to something with real stakes—literally. So instead of using AI to help me study flashcards, I started building models to find edges in player props.
 
-That's how BenAi started. A side project to fund school turned into a full system: agents, workflows, databases, the whole thing. This repo is just the inference layer—the part that takes player stats and spits out a prediction.
+That side project turned into a full system: agents, workflows, databases, the whole thing. This repo is just the inference layer—the part that takes player stats and returns a prediction.
 
 I pulled it out and cleaned it up because the full system is messy and personal. This is the version I can show people.
 
@@ -161,7 +161,7 @@ This shows how I build and serve a model: reproducible training, serialization, 
 
 ## Where this fits
 
-I started with sports betting, but BenAi has grown way past that. Websites, workflows, agents, networking, CI/CD pipelines. This repo is a slice of the system, cleaned up and made public.
+I started with sports betting, and the system grew past that. Websites, workflows, agents, networking, CI/CD pipelines. This repo is a slice — cleaned up and made public.
 
 It's not the whole picture. But it shows how I think about shipping things: tested, logged, versioned, containerized. The fundamentals.
 
