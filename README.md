@@ -4,6 +4,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> **Status:** Stable. Pulled from a larger private system to demonstrate this slice as a standalone tool. Treat as a snapshot, not current production.
+
 ## Why does this exist?
 
 I needed to make money for med school. Sports betting seemed like a good way to apply math to something with real stakes—literally. So instead of using AI to help me study flashcards, I started building models to find edges in player props.
