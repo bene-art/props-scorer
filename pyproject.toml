@@ -2,7 +2,7 @@
 name = "props-scorer"
 version = "0.1.0"
 description = "Production ML inference service"
-authors = [{name = "Benjamin Easington", email = "ben@fructuracycle.com"}]
+authors = [{name = "bene-art", email = "bene-art@users.noreply.github.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
