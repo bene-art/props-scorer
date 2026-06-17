@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Status:** Stable. Pulled from a larger private system to demonstrate this slice as a standalone tool. Treat as a snapshot, not current production.
+> **Status:** Stable. Pulled from a larger private system to demonstrate this slice as a standalone tool. Treat as a snapshot, not current production. Security reports via [SECURITY.md](./SECURITY.md).
 
 ## Why does this exist?
 
