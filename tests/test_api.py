@@ -1,6 +1,8 @@
 """API endpoint tests."""
+
 import pytest
 from fastapi.testclient import TestClient
+
 from inference_api.main import app
 
 
@@ -10,8 +12,10 @@ def client():
 
 
 VALID = {
-    "stat_type": "points", "line": 25.5,
-    "rolling_5_avg": 26.0, "rolling_10_avg": 25.0,
+    "stat_type":      "points",
+    "line":            25.5,
+    "rolling_5_avg":   26.0,
+    "rolling_10_avg":  25.0,
 }
 
 
@@ -60,57 +64,59 @@ class TestPredictEndpoint:
         assert "probability" in data and 0.0 <= data["probability"] <= 1.0
 
     def test_predict_returns_confidence(self, client):
-        assert client.post("/predict", json=VALID).json()["confidence"] in ["low","medium","high"]
+        assert client.post("/predict", json=VALID).json()["confidence"] in ["low", "medium", "high"]
 
     def test_predict_returns_recommendation(self, client):
-        assert client.post("/predict", json=VALID).json()["recommendation"] in ["OVER","UNDER","NO_EDGE"]
+        assert client.post("/predict", json=VALID).json()["recommendation"] in [
+            "OVER", "UNDER", "NO_EDGE"
+        ]
 
     def test_predict_returns_model_version(self, client):
         assert client.post("/predict", json=VALID).json()["model_version"]
 
     def test_predict_returns_source(self, client):
-        assert client.post("/predict", json=VALID).json()["source"] in ["model","heuristic"]
+        assert client.post("/predict", json=VALID).json()["source"] in ["model", "heuristic"]
 
     def test_predict_requires_stat_type(self, client):
-        assert client.post("/predict", json={k:v for k,v in VALID.items() if k!="stat_type"}).status_code == 422
+        assert client.post("/predict", json={k: v for k, v in VALID.items() if k != "stat_type"}).status_code == 422
 
     def test_predict_requires_line(self, client):
-        assert client.post("/predict", json={k:v for k,v in VALID.items() if k!="line"}).status_code == 422
+        assert client.post("/predict", json={k: v for k, v in VALID.items() if k != "line"}).status_code == 422
 
     def test_predict_requires_rolling_avgs(self, client):
-        assert client.post("/predict", json={"stat_type":"points","line":25.5}).status_code == 422
+        assert client.post("/predict", json={"stat_type": "points", "line": 25.5}).status_code == 422
 
     def test_valid_stat_types_accepted(self, client):
-        for stat in ["points","rebounds","assists"]:
-            assert client.post("/predict", json={**VALID,"stat_type":stat}).status_code == 200, stat
+        for stat in ["points", "rebounds", "assists"]:
+            assert client.post("/predict", json={**VALID, "stat_type": stat}).status_code == 200, stat
 
     def test_invalid_stat_type_rejected(self, client):
-        assert client.post("/predict", json={**VALID,"stat_type":"goals"}).status_code == 422
+        assert client.post("/predict", json={**VALID, "stat_type": "goals"}).status_code == 422
 
     def test_line_must_be_positive(self, client):
-        assert client.post("/predict", json={**VALID,"line":-1.0}).status_code == 422
+        assert client.post("/predict", json={**VALID, "line": -1.0}).status_code == 422
 
 
 class TestBatchEndpoint:
     def test_batch_returns_200(self, client):
-        assert client.post("/predict/batch", json={"predictions":[VALID,VALID]}).status_code == 200
+        assert client.post("/predict/batch", json={"predictions": [VALID, VALID]}).status_code == 200
 
     def test_batch_returns_correct_count(self, client):
-        data = client.post("/predict/batch", json={"predictions":[VALID]*3}).json()
+        data = client.post("/predict/batch", json={"predictions": [VALID] * 3}).json()
         assert data["count"] == 3 and len(data["results"]) == 3
 
     def test_batch_each_result_is_valid(self, client):
-        results = client.post("/predict/batch", json={"predictions":[VALID,VALID]}).json()["results"]
+        results = client.post("/predict/batch", json={"predictions": [VALID, VALID]}).json()["results"]
         for r in results:
             assert 0.0 <= r["probability"] <= 1.0
-            assert r["confidence"] in ["low","medium","high"]
-            assert r["recommendation"] in ["OVER","UNDER","NO_EDGE"]
+            assert r["confidence"] in ["low", "medium", "high"]
+            assert r["recommendation"] in ["OVER", "UNDER", "NO_EDGE"]
 
     def test_batch_empty_rejected(self, client):
-        assert client.post("/predict/batch", json={"predictions":[]}).status_code == 422
+        assert client.post("/predict/batch", json={"predictions": []}).status_code == 422
 
     def test_batch_over_limit_rejected(self, client):
-        assert client.post("/predict/batch", json={"predictions":[VALID]*51}).status_code == 422
+        assert client.post("/predict/batch", json={"predictions": [VALID] * 51}).status_code == 422
 
 
 class TestRequestHeaders:
