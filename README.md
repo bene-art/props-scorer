@@ -165,7 +165,16 @@ This shows how I build and serve a model: reproducible training, serialization, 
 
 I started with sports betting, and the system grew past that. Websites, workflows, agents, networking, CI/CD pipelines. This repo is a slice — cleaned up and made public.
 
-It's not the whole picture. But it shows how I think about shipping things: tested, logged, versioned, containerized. The fundamentals.
+Four repos, four concerns:
+
+| Repo | Question it answers |
+|------|---------------------|
+| [**props-scorer**](https://github.com/bene-art/props-scorer) | What's going to happen? |
+| [**betting-math-kit**](https://github.com/bene-art/betting-math-kit) | What should I do about it? |
+| [**bet-tracker**](https://github.com/bene-art/bet-tracker) | Did it work? |
+| [**backtester**](https://github.com/bene-art/backtester) | Would it have worked? |
+
+The `/predict` response — a probability between 0 and 1 — is the natural input to `betting_math_kit.calculate_edge_calibrated()`. That's where inference hands off to decision math.
 
 ---
 
