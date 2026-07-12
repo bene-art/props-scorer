@@ -1,7 +1,7 @@
 [project]
 name = "props-scorer"
-version = "0.1.0"
-description = "Production ML inference service"
+version = "1.0.0"
+description = "NBA player prop inference — real data pipeline, calibrated XGBoost, FastAPI serving"
 authors = [{name = "bene-art", email = "bene-art@users.noreply.github.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,8 @@ dependencies = [
     "xgboost>=2.0.0",
     "joblib>=1.3.0",
     "numpy>=1.26.0",
+    "pandas>=2.0.0",
+    "nba_api>=1.5.0",
 ]
 
 [project.optional-dependencies]
@@ -29,12 +31,12 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src"]
-addopts = "-v --tb=short"
+testpaths   = ["tests"]
+pythonpath  = ["src"]
+addopts     = "-v --tb=short"
 
 [tool.ruff]
-line-length = 100
+line-length    = 100
 target-version = "py310"
 
 [tool.ruff.lint]
