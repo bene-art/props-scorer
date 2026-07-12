@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Status:** Stable. Pulled from a larger private system to demonstrate this slice as a standalone tool. Treat as a snapshot, not current production. Security reports via [SECURITY.md](./SECURITY.md).
+> **Status:** Stable. Real NBA game log data (2023–25), calibrated XGBoost, production serving patterns. Run `scripts/fetch_data.py` then `scripts/train_model.py` before serving. Security reports via [SECURITY.md](./SECURITY.md).
 
 ## Why does this exist?
 
@@ -36,30 +36,50 @@ That's it. Three endpoints:
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{
-    "sport": "NBA",
-    "stat_type": "points",
-    "line": 25.5,
-    "glicko_mu": 1650.0,
-    "last_5_avg": 27.2,
-    "last_10_avg": 26.8,
-    "is_home": true
+    "stat_type":      "points",
+    "line":           27.5,
+    "rolling_5_avg":  28.2,
+    "rolling_10_avg": 26.8,
+    "rolling_5_std":  4.1,
+    "rest_days":      2,
+    "is_home":        true,
+    "opp_def_rtg":    112.3
   }'
 ```
 
 ```json
 {
-  "probability": 0.62,
-  "confidence": "medium",
+  "probability":    0.61,
+  "confidence":     "medium",
   "recommendation": "OVER",
-  "model_version": "xgb-v3"
+  "model_version":  "nba_points_v1",
+  "source":         "model"
 }
 ```
 
-Translation: 62% chance he goes over 25.5 points. Medium confidence. Model says take the over.
-
-`glicko_mu` and `glicko_phi` are Glicko ratings — a player skill estimate and its uncertainty, similar to chess Elo but with an explicit confidence interval. Defaults (1500/200) apply if you don't have them.
+Translation: 61% chance he goes over 27.5 points. Medium confidence. `source` tells you whether the trained model or the heuristic fallback made the call.
 
 When probability sits between 0.45 and 0.55, the model returns `NO_EDGE` instead of a direction. Abstaining is a first-class output, not a fallback.
+
+---
+
+## Pipeline
+
+```bash
+# 1. Fetch real NBA game logs — cached after first run (~2-3 min)
+python scripts/fetch_data.py
+
+# 2. Train calibrated model on 2023-25 season data (~2-3 min)
+python scripts/train_model.py
+
+# 3. Evaluate calibration on held-out test set
+python scripts/evaluate_model.py
+
+# 4. Serve
+uvicorn inference_api.main:app --reload
+```
+
+Three scripts, end to end. Everything is reproducible from raw data.
 
 ---
 
@@ -88,7 +108,9 @@ props-scorer/
 │   ├── xgb_scorer_v3.joblib  # Trained XGBoost model (synthetic data)
 │   └── xgb_scorer_v3.json    # Model metadata and metrics
 ├── scripts/
-│   ├── train_model.py     # Reproducible training on synthetic data
+│   ├── fetch_data.py      # Pull NBA game logs via nba_api (cached)
+│   ├── train_model.py     # Calibrated XGBoost on real game log data
+│   ├── evaluate_model.py  # Calibration curve + edge bucket analysis
 │   └── healthcheck.py     # Docker/CI health check
 ├── tests/                 # 32 checks to prove it works
 ├── Dockerfile             # How to ship it anywhere
@@ -97,24 +119,20 @@ props-scorer/
 
 For the engineer:
 
-- **XGBoost** classifier trained on synthetic data (reproducible via `scripts/train_model.py`)
+- **XGBoost + isotonic calibration** trained on real NBA game logs (2023–25 regular seasons)
 - **FastAPI** with async handlers
 - **Pydantic** schemas for request validation
 - **Structured JSON logging** with request correlation IDs
 - **Docker** containerization with health checks
 - **GitHub Actions** CI across Python 3.10-3.13
 
-**Model metrics** (synthetic data, reproducible via `scripts/train_model.py`):
+**Model metrics** (real data — run `python scripts/evaluate_model.py` after training):
 
-| Metric | Value |
-|--------|-------|
-| Training samples | 4,000 |
-| Test samples | 1,000 |
-| Accuracy | 0.559 |
-| AUC-ROC | 0.589 |
-| Log loss | 0.691 |
-
-Near-chance accuracy on synthetic data is expected — the model architecture and serving pipeline are the artifact here, not the edge.
+| | Where to find it |
+|-|-----------------|
+| Brier score (calibrated vs raw) | `models/nba_points_v1.json` |
+| Calibration curve | `python scripts/evaluate_model.py` |
+| Feature importances | `python scripts/train_model.py` output |
 
 Architectural rationale: [docs/architectural_decisions.md](./docs/architectural_decisions.md)
 
@@ -142,7 +160,10 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest              # 32 tests, should all pass
+python scripts/fetch_data.py   # pull game logs -> data/
+python scripts/train_model.py  # calibrate model -> models/
+
+pytest
 uvicorn inference_api.main:app --reload
 ```
 
@@ -163,9 +184,9 @@ Same thing, but containerized. Runs the same on your laptop, a server, or Kubern
 
 ## What this doesn't include
 
-The included model is trained on **synthetic data** to demonstrate the full serving pipeline. Real model weights, player rating databases, and calibration curves stay private.
+The model uses publicly available NBA game log data and commodity features — rolling averages, rest days, home/away, opponent defensive rating. None of this generates real edge on its own; it's already priced into the market.
 
-This shows how I build and serve a model: reproducible training, serialization, feature engineering, and structured inference. The actual edge stays private.
+What's not here: the proprietary signal. The pipeline — fetch, engineer, calibrate, serve, evaluate — is the artifact.
 
 ---
 
@@ -196,4 +217,4 @@ MIT. Do whatever you want with it.
 
 Benjamin Easington — [GitHub](https://github.com/bene-art)
 
-I work in logistics, go to school, and build stuff on the side. If you're reading this, you probably care about AI or sports betting or both. Either way, feel free to reach out.
+I'm an engineer building production AI systems. This repo is one slice of a larger private stack. More at [github.com/bene-art](https://github.com/bene-art).
