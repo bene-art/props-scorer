@@ -27,6 +27,7 @@ That's it. Three endpoints:
 | `/health` | "You alive?" → "Yeah, here's my version" |
 | `/model` | "What stats do you need?" → List of features |
 | `/predict` | "Here's the player data" → Probability + recommendation |
+| `/predict/batch` | Same thing for up to 50 players at once |
 
 ---
 
