@@ -57,6 +57,10 @@ curl -X POST http://localhost:8000/predict \
 
 Translation: 62% chance he goes over 25.5 points. Medium confidence. Model says take the over.
 
+`glicko_mu` and `glicko_phi` are Glicko ratings — a player skill estimate and its uncertainty, similar to chess Elo but with an explicit confidence interval. Defaults (1500/200) apply if you don't have them.
+
+When probability sits between 0.45 and 0.55, the model returns `NO_EDGE` instead of a direction. Abstaining is a first-class output, not a fallback.
+
 ---
 
 ## Why sports betting?
@@ -66,16 +70,6 @@ Honestly? The math.
 Baseball especially—so many stats, so many ways to slice it. Once you get past a certain level, math stops being something you have to do and becomes something you *get* to do. It's a tool, not a crutch.
 
 Sports betting is also a brutally honest feedback loop. You're either right or you're not. The market doesn't care about your feelings. I like that.
-
----
-
-## Why AI?
-
-I think people are afraid of what they don't understand. And that fear creates distance from technology that's actively changing everything.
-
-I went the other direction. Started using it, started building with it, and now I genuinely can't imagine working without it. The potential is insane—especially in physics, which is what I nerd out about when I'm not coding. (Interstellar is my favorite movie. Make of that what you will.)
-
-AI in the right hands is a multiplier. It lets you research faster, build faster, iterate faster. The effort is still yours. The results are still yours. But the ceiling is way higher.
 
 ---
 
@@ -108,7 +102,21 @@ For the engineer:
 - **Pydantic** schemas for request validation
 - **Structured JSON logging** with request correlation IDs
 - **Docker** containerization with health checks
-- **GitHub Actions** CI across Python 3.10-3.12
+- **GitHub Actions** CI across Python 3.10-3.13
+
+**Model metrics** (synthetic data, reproducible via `scripts/train_model.py`):
+
+| Metric | Value |
+|--------|-------|
+| Training samples | 4,000 |
+| Test samples | 1,000 |
+| Accuracy | 0.559 |
+| AUC-ROC | 0.589 |
+| Log loss | 0.691 |
+
+Near-chance accuracy on synthetic data is expected — the model architecture and serving pipeline are the artifact here, not the edge.
+
+Architectural rationale: [docs/architectural_decisions.md](./docs/architectural_decisions.md)
 
 ---
 
