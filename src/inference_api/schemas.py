@@ -1,124 +1,64 @@
-"""
-Pydantic schemas for request/response validation.
-"""
-
+"""Pydantic schemas for request/response validation."""
 from enum import Enum
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class SportEnum(str, Enum):
-    """Supported sports."""
-
-    NBA = "NBA"
-    NFL = "NFL"
-    NHL = "NHL"
-    MLB = "MLB"
-
-
 class StatTypeEnum(str, Enum):
-    """Supported stat types."""
-
-    # Basketball
-    points = "points"
-    rebounds = "rebounds"
-    assists = "assists"
-    threes = "threes"
-    pts_rebs = "pts_rebs"
-    pts_asts = "pts_asts"
-    pts_rebs_asts = "pts_rebs_asts"
-    # Football
-    passing_yards = "passing_yards"
-    rushing_yards = "rushing_yards"
-    receiving_yards = "receiving_yards"
-    touchdowns = "touchdowns"
-    # Baseball
-    hits = "hits"
-    home_runs = "home_runs"
-    rbis = "rbis"
-    strikeouts = "strikeouts"
-    total_bases = "total_bases"
-    # Hockey
-    goals = "goals"
-    shots = "shots"
-    saves = "saves"
+    points   = "points"    # Model-backed (calibrated XGBoost)
+    rebounds = "rebounds"  # Heuristic fallback
+    assists  = "assists"   # Heuristic fallback
+    threes   = "threes"    # Heuristic fallback
 
 
 class HealthResponse(BaseModel):
-    """Health check response."""
-
-    status: str = Field(..., description="Service status")
-    version: str = Field(..., description="API version")
-    model_version: str = Field(..., description="Deployed model version")
-    timestamp: str = Field(..., description="ISO timestamp")
+    status: str; version: str; model_version: str; timestamp: str
 
 
 class ModelResponse(BaseModel):
-    """Model metadata response."""
-
-    model_version: str = Field(..., description="Model version identifier")
-    model_type: str = Field(..., description="Model architecture type")
-    api_version: str = Field(..., description="API version")
-    supported_sports: list[str] = Field(..., description="Supported sports")
-    inputs: list[str] = Field(..., description="Required/optional fields in predict request")
-    engineered_features: list[str] = Field(
-        ..., description="Features computed internally from inputs"
-    )
-    notes: str = Field(default="", description="Additional information about the model")
+    model_version: str; model_type: str; api_version: str
+    supported_sports: list[str]; inputs: list[str]
+    engineered_features: list[str]; notes: str = ""
 
 
 class PredictRequest(BaseModel):
-    """Prediction request payload."""
-
-    sport: SportEnum = Field(..., description="Sport code (NBA, NFL, NHL, MLB)")
-    stat_type: StatTypeEnum = Field(..., description="Statistic type")
-    line: float = Field(..., description="Betting line value")
-
-    # Player features
-    glicko_mu: float = Field(default=1500.0, description="Player Glicko rating")
-    glicko_phi: float = Field(default=200.0, description="Player Glicko uncertainty")
-    last_5_avg: float = Field(default=0.0, description="Last 5 games average")
-    last_10_avg: float = Field(default=0.0, description="Last 10 games average")
-
-    # Game context
-    is_home: bool = Field(default=True, description="Home game indicator")
-    team_elo: float = Field(default=1500.0, description="Team Elo rating")
-    opponent_elo: float = Field(default=1500.0, description="Opponent Elo rating")
+    """All rolling averages must be computed on games *prior* to the current game."""
+    stat_type:      StatTypeEnum = Field(...,              description="Stat type")
+    line:           float        = Field(..., gt=0,        description="Betting line value")
+    rolling_5_avg:  float        = Field(..., ge=0,        description="5-game rolling average")
+    rolling_10_avg: float        = Field(..., ge=0,        description="10-game rolling average")
+    rolling_5_std:  float        = Field(default=3.0, ge=0)
+    rest_days:      int          = Field(default=2, ge=0, le=10)
+    is_home:        bool         = Field(default=True)
+    opp_def_rtg:    float        = Field(default=110.0,    description="Opponent defensive rating (league avg ~110)")
+    games_played:   int          = Field(default=20, ge=0)
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "sport": "NBA",
-                "stat_type": "points",
-                "line": 25.5,
-                "glicko_mu": 1650.0,
-                "glicko_phi": 150.0,
-                "last_5_avg": 27.2,
-                "last_10_avg": 26.8,
-                "is_home": True,
-                "team_elo": 1580.0,
-                "opponent_elo": 1520.0,
-            }
-        },
+        json_schema_extra={"example": {
+            "stat_type": "points", "line": 27.5,
+            "rolling_5_avg": 28.2, "rolling_10_avg": 26.8, "rolling_5_std": 4.1,
+            "rest_days": 2, "is_home": True, "opp_def_rtg": 112.3, "games_played": 45,
+        }},
         use_enum_values=True,
     )
 
 
 class PredictResponse(BaseModel):
-    """Prediction response."""
+    probability:    float = Field(..., description="P(over line)")
+    confidence:     str   = Field(..., description="low / medium / high")
+    recommendation: str   = Field(..., description="OVER / UNDER / NO_EDGE")
+    model_version:  str
+    source:         str   = Field(..., description="model or heuristic")
 
-    probability: float = Field(..., description="P(over) probability")
-    confidence: str = Field(..., description="Confidence level (low/medium/high)")
-    recommendation: str = Field(..., description="Betting recommendation")
-    model_version: str = Field(..., description="Model version used")
+    model_config = ConfigDict(json_schema_extra={"example": {
+        "probability": 0.61, "confidence": "medium", "recommendation": "OVER",
+        "model_version": "nba_points_v1", "source": "model",
+    }})
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "probability": 0.62,
-                "confidence": "medium",
-                "recommendation": "OVER",
-                "model_version": "xgb-v3",
-            }
-        }
-    )
+
+class BatchPredictRequest(BaseModel):
+    predictions: list[PredictRequest] = Field(..., min_length=1, max_length=50)
+
+
+class BatchPredictResponse(BaseModel):
+    results: list[PredictResponse]
+    count:   int
