@@ -50,12 +50,15 @@ logs/
 .env.local
 .env.*.local
 
-# Model files (large/proprietary — never commit real weights)
+# Data files — fetch with scripts/fetch_data.py
+data/*.csv
+
+# Model binaries — train with scripts/train_model.py
 *.pkl
 *.h5
 *.onnx
 *.joblib
 
-# Allow the synthetic trained model (committed to repo)
+# Allow the committed synthetic baseline model
 !models/xgb_scorer_v3.joblib
 !models/xgb_scorer_v3.json
