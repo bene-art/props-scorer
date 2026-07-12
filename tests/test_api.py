@@ -1,249 +1,122 @@
-"""
-API endpoint tests.
-
-Tests for:
-- Health check endpoint
-- Model info endpoint
-- Prediction endpoint
-- Error handling
-- Input validation
-"""
-
+"""API endpoint tests."""
 import pytest
 from fastapi.testclient import TestClient
-
 from inference_api.main import app
 
 
 @pytest.fixture
 def client():
-    """Create test client."""
     return TestClient(app)
 
 
-class TestHealthEndpoint:
-    """Tests for /health endpoint."""
+VALID = {
+    "stat_type": "points", "line": 25.5,
+    "rolling_5_avg": 26.0, "rolling_10_avg": 25.0,
+}
 
+
+class TestHealthEndpoint:
     def test_health_returns_200(self, client):
-        """Health endpoint should return 200."""
-        response = client.get("/health")
-        assert response.status_code == 200
+        assert client.get("/health").status_code == 200
 
     def test_health_returns_status(self, client):
-        """Health response should include status."""
-        response = client.get("/health")
-        data = response.json()
-        assert data["status"] == "healthy"
+        assert client.get("/health").json()["status"] == "healthy"
 
     def test_health_returns_version(self, client):
-        """Health response should include version."""
-        response = client.get("/health")
-        data = response.json()
-        assert "version" in data
-        assert "model_version" in data
+        data = client.get("/health").json()
+        assert "version" in data and "model_version" in data
 
     def test_health_returns_timestamp(self, client):
-        """Health response should include timestamp."""
-        response = client.get("/health")
-        data = response.json()
-        assert "timestamp" in data
+        assert "timestamp" in client.get("/health").json()
 
 
 class TestModelEndpoint:
-    """Tests for /model endpoint."""
-
     def test_model_returns_200(self, client):
-        """Model endpoint should return 200."""
-        response = client.get("/model")
-        assert response.status_code == 200
+        assert client.get("/model").status_code == 200
 
     def test_model_returns_version(self, client):
-        """Model response should include version."""
-        response = client.get("/model")
-        data = response.json()
-        assert "model_version" in data
-        assert "api_version" in data
+        data = client.get("/model").json()
+        assert "model_version" in data and "api_version" in data
 
     def test_model_returns_inputs(self, client):
-        """Model response should include inputs list."""
-        response = client.get("/model")
-        data = response.json()
-        assert "inputs" in data
-        assert isinstance(data["inputs"], list)
-        assert len(data["inputs"]) > 0
-        # Check required inputs are listed
-        assert "sport" in data["inputs"]
-        assert "stat_type" in data["inputs"]
-        assert "line" in data["inputs"]
+        inputs = client.get("/model").json()["inputs"]
+        assert "stat_type" in inputs and "line" in inputs
+        assert "rolling_5_avg" in inputs and "rolling_10_avg" in inputs
 
     def test_model_returns_engineered_features(self, client):
-        """Model response should include engineered features."""
-        response = client.get("/model")
-        data = response.json()
-        assert "engineered_features" in data
-        assert isinstance(data["engineered_features"], list)
-        assert "line_vs_avg" in data["engineered_features"]
-        assert "elo_diff" in data["engineered_features"]
+        feats = client.get("/model").json()["engineered_features"]
+        assert "line_vs_avg" in feats and "avg_trend" in feats
 
     def test_model_returns_supported_sports(self, client):
-        """Model response should include supported sports."""
-        response = client.get("/model")
-        data = response.json()
-        assert "supported_sports" in data
-        assert "NBA" in data["supported_sports"]
-
-    def test_model_returns_notes(self, client):
-        """Model response should include notes field."""
-        response = client.get("/model")
-        data = response.json()
-        assert "notes" in data
+        assert "NBA" in client.get("/model").json()["supported_sports"]
 
 
 class TestPredictEndpoint:
-    """Tests for /predict endpoint."""
-
     def test_predict_returns_200(self, client):
-        """Predict endpoint should return 200 for valid input."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-            "line": 25.5,
-            "glicko_mu": 1600.0,
-            "last_5_avg": 27.0,
-            "last_10_avg": 26.5,
-        }
-        response = client.post("/predict", json=payload)
-        assert response.status_code == 200
+        assert client.post("/predict", json=VALID).status_code == 200
 
     def test_predict_returns_probability(self, client):
-        """Predict response should include probability."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        data = response.json()
-        assert "probability" in data
-        assert 0.0 <= data["probability"] <= 1.0
+        data = client.post("/predict", json=VALID).json()
+        assert "probability" in data and 0.0 <= data["probability"] <= 1.0
 
     def test_predict_returns_confidence(self, client):
-        """Predict response should include confidence level."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        data = response.json()
-        assert "confidence" in data
-        assert data["confidence"] in ["low", "medium", "high"]
+        assert client.post("/predict", json=VALID).json()["confidence"] in ["low","medium","high"]
 
     def test_predict_returns_recommendation(self, client):
-        """Predict response should include recommendation."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        data = response.json()
-        assert "recommendation" in data
-        assert data["recommendation"] in ["OVER", "UNDER", "NO_EDGE"]
+        assert client.post("/predict", json=VALID).json()["recommendation"] in ["OVER","UNDER","NO_EDGE"]
 
     def test_predict_returns_model_version(self, client):
-        """Predict response should include model version."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        data = response.json()
-        assert "model_version" in data
+        assert client.post("/predict", json=VALID).json()["model_version"]
 
-    def test_predict_requires_sport(self, client):
-        """Predict should require sport field."""
-        payload = {
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        assert response.status_code == 422
+    def test_predict_returns_source(self, client):
+        assert client.post("/predict", json=VALID).json()["source"] in ["model","heuristic"]
+
+    def test_predict_requires_stat_type(self, client):
+        assert client.post("/predict", json={k:v for k,v in VALID.items() if k!="stat_type"}).status_code == 422
 
     def test_predict_requires_line(self, client):
-        """Predict should require line field."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "points",
-        }
-        response = client.post("/predict", json=payload)
-        assert response.status_code == 422
+        assert client.post("/predict", json={k:v for k,v in VALID.items() if k!="line"}).status_code == 422
 
-    def test_predict_all_sports(self, client):
-        """Predict should accept all supported sports."""
-        for sport in ["NBA", "NFL", "NHL", "MLB"]:
-            payload = {
-                "sport": sport,
-                "stat_type": "points",
-                "line": 25.5,
-            }
-            response = client.post("/predict", json=payload)
-            assert response.status_code == 200, f"Failed for sport: {sport}"
-
-
-class TestInputValidation:
-    """Tests for input validation with enums."""
-
-    def test_invalid_sport_rejected(self, client):
-        """Invalid sport value should return 422."""
-        payload = {
-            "sport": "INVALID_SPORT",
-            "stat_type": "points",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        assert response.status_code == 422
-        data = response.json()
-        assert "detail" in data
-
-    def test_invalid_stat_type_rejected(self, client):
-        """Invalid stat_type value should return 422."""
-        payload = {
-            "sport": "NBA",
-            "stat_type": "invalid_stat",
-            "line": 25.5,
-        }
-        response = client.post("/predict", json=payload)
-        assert response.status_code == 422
-        data = response.json()
-        assert "detail" in data
+    def test_predict_requires_rolling_avgs(self, client):
+        assert client.post("/predict", json={"stat_type":"points","line":25.5}).status_code == 422
 
     def test_valid_stat_types_accepted(self, client):
-        """Valid stat types should be accepted."""
-        valid_stats = ["points", "rebounds", "assists", "goals", "hits"]
-        for stat in valid_stats:
-            payload = {
-                "sport": "NBA",
-                "stat_type": stat,
-                "line": 25.5,
-            }
-            response = client.post("/predict", json=payload)
-            assert response.status_code == 200, f"Failed for stat_type: {stat}"
+        for stat in ["points","rebounds","assists"]:
+            assert client.post("/predict", json={**VALID,"stat_type":stat}).status_code == 200, stat
+
+    def test_invalid_stat_type_rejected(self, client):
+        assert client.post("/predict", json={**VALID,"stat_type":"goals"}).status_code == 422
+
+    def test_line_must_be_positive(self, client):
+        assert client.post("/predict", json={**VALID,"line":-1.0}).status_code == 422
+
+
+class TestBatchEndpoint:
+    def test_batch_returns_200(self, client):
+        assert client.post("/predict/batch", json={"predictions":[VALID,VALID]}).status_code == 200
+
+    def test_batch_returns_correct_count(self, client):
+        data = client.post("/predict/batch", json={"predictions":[VALID]*3}).json()
+        assert data["count"] == 3 and len(data["results"]) == 3
+
+    def test_batch_each_result_is_valid(self, client):
+        results = client.post("/predict/batch", json={"predictions":[VALID,VALID]}).json()["results"]
+        for r in results:
+            assert 0.0 <= r["probability"] <= 1.0
+            assert r["confidence"] in ["low","medium","high"]
+            assert r["recommendation"] in ["OVER","UNDER","NO_EDGE"]
+
+    def test_batch_empty_rejected(self, client):
+        assert client.post("/predict/batch", json={"predictions":[]}).status_code == 422
+
+    def test_batch_over_limit_rejected(self, client):
+        assert client.post("/predict/batch", json={"predictions":[VALID]*51}).status_code == 422
 
 
 class TestRequestHeaders:
-    """Tests for request tracking headers."""
-
     def test_response_includes_request_id(self, client):
-        """Response should include X-Request-ID header."""
-        response = client.get("/health")
-        assert "X-Request-ID" in response.headers
+        assert "X-Request-ID" in client.get("/health").headers
 
     def test_response_includes_latency(self, client):
-        """Response should include X-Latency-MS header."""
-        response = client.get("/health")
-        assert "X-Latency-MS" in response.headers
-        # Latency should be a valid number
-        latency = float(response.headers["X-Latency-MS"])
-        assert latency >= 0
+        resp = client.get("/health")
+        assert "X-Latency-MS" in resp.headers and float(resp.headers["X-Latency-MS"]) >= 0
