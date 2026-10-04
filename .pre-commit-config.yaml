@@ -9,7 +9,7 @@ repos:
   - repo: local
     hooks:
       - id: private-vocab-scrub
-        name: Block private vocabulary (hashed blocklist)
+        name: Block private vocabulary (local blocklist)
         entry: python3 scripts/vocab_scrub.py
         language: system
         pass_filenames: true
